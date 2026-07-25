@@ -1,0 +1,6 @@
+{
+  "name": "نظام إدارة أجهزة الكمبيوتر للمستشفيات",
+  "description": "نظام متكامل لإدارة وتتبع أجهزة الكمبيوتر في المستشفى، مع دعم رفع وتصدير شيتات إكسيل (Excel/CSV)، وسجلات الصيانة والتوزيع حسب الأقسام.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
