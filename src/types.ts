@@ -22,6 +22,10 @@ export type AuditActionType =
   | 'add_device'
   | 'edit_device'
   | 'delete_device'
+  | 'soft_delete_devices'
+  | 'restore_devices'
+  | 'permanent_delete_devices'
+  | 'mysql_sync_all'
   | 'maintenance_add'
   | 'excel_import'
   | 'excel_export'
@@ -100,6 +104,11 @@ export interface ComputerAsset {
   updatedAt: string;
   createdByUserName?: string;
   updatedByUserName?: string;
+
+  // الحذف المؤقت (Soft Delete)
+  isDeleted?: boolean;
+  deletedAt?: string;
+  deletedBy?: string;
   
   // حقول وأعمدة إضافية مخصصة من الإكسيل
   customFields?: Record<string, string>;

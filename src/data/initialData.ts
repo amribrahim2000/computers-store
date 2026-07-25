@@ -27,13 +27,42 @@ export const INITIAL_COMPUTERS: ComputerAsset[] = [
       {
         id: 'maint-101',
         assetId: 'pc-001',
-        date: '2024-08-15',
-        issue: 'تنظيف دوري ومراجعة مراوح التبريد',
-        actionTaken: 'تم استبدال معجون التبريد وتنظيف غبار المروحة',
+        date: '2026-02-15',
+        issue: 'عطل في مفتاح الباور وتنظيف دوري لمروحة المشتت',
+        actionTaken: 'تم استبدال زر التشغيل وتنظيف الأتربة',
         technicianName: 'م. خالد عبد الرحمن',
         cost: 150,
-        status: 'completed',
-        notes: 'الحالة ممتازة الآن'
+        status: 'completed'
+      },
+      {
+        id: 'maint-101b',
+        assetId: 'pc-001',
+        date: '2026-03-20',
+        issue: 'فصل مفاجئ للشاشة أثناء كشف الطوارئ',
+        actionTaken: 'تم تثبيت كابل الشاشة DisplayPort الممتد وتأمين التوصيل',
+        technicianName: 'م. أحمد عبد الفتاح',
+        cost: 80,
+        status: 'completed'
+      },
+      {
+        id: 'maint-101c',
+        assetId: 'pc-001',
+        date: '2026-05-10',
+        issue: 'بطء ملحوظ في قراءة قاعدة بيانات المرضى',
+        actionTaken: 'تم تنظيف الملفات المؤقتة وعمل Defrag وتحديث التعريفات',
+        technicianName: 'م. طارق حسن',
+        cost: 0,
+        status: 'completed'
+      },
+      {
+        id: 'maint-101d',
+        assetId: 'pc-001',
+        date: '2026-07-05',
+        issue: 'توقف مفاجئ لنظام التشغيل وحاجة لفحص الذاكرة',
+        actionTaken: 'تم فحص الرامات واستبدال شريحة RAM قدرة 8GB',
+        technicianName: 'م. خالد عبد الرحمن',
+        cost: 350,
+        status: 'completed'
       }
     ]
   },
@@ -59,7 +88,28 @@ export const INITIAL_COMPUTERS: ComputerAsset[] = [
     notes: 'متصل بنظام مراقبة مؤشرات العلامات الحيوية للمرضى',
     createdAt: '2022-11-01T08:00:00Z',
     updatedAt: '2025-02-01T09:00:00Z',
-    maintenanceHistory: []
+    maintenanceHistory: [
+      {
+        id: 'maint-102a',
+        assetId: 'pc-002',
+        date: '2026-03-12',
+        issue: 'عدم استجابة شاشة لمس المراقبة الطبية',
+        actionTaken: 'تم إعادة معايرة شاشة اللمس وتحديث تعريف الجرافيك',
+        technicianName: 'م. خالد عبد الرحمن',
+        cost: 0,
+        status: 'completed'
+      },
+      {
+        id: 'maint-102b',
+        assetId: 'pc-002',
+        date: '2026-06-18',
+        issue: 'ارتفاع حرارة المعالج وصوت مروحة التبريد',
+        actionTaken: 'تم تغيير المعجون الحراري وتنظيف الفلاتر',
+        technicianName: 'م. طارق حسن',
+        cost: 120,
+        status: 'completed'
+      }
+    ]
   },
   {
     id: 'pc-003',
@@ -82,7 +132,29 @@ export const INITIAL_COMPUTERS: ComputerAsset[] = [
     vendorName: 'Lenovo Workstations',
     notes: 'محطة عمل فائقة الكفاءة لمعالجة صور DICOM والـ PACS',
     createdAt: '2024-01-20T08:00:00Z',
-    updatedAt: '2025-03-01T12:00:00Z'
+    updatedAt: '2025-03-01T12:00:00Z',
+    maintenanceHistory: [
+      {
+        id: 'maint-103a',
+        assetId: 'pc-003',
+        date: '2026-04-14',
+        issue: 'بطء في معالجة صبغة صور الأشعة المقطعية',
+        actionTaken: 'تحديث تعريف كارت الشاشة Nvidia Quadro وذاكرة VRAM',
+        technicianName: 'م. أحمد عبد الفتاح',
+        cost: 0,
+        status: 'completed'
+      },
+      {
+        id: 'maint-103b',
+        assetId: 'pc-003',
+        date: '2026-06-25',
+        issue: 'امتلاء القرص NVMe SSD المخصص لحفظ صور DICOM',
+        actionTaken: 'تم عمل أرشفة تلقائية للأنظمة المركزية وتفريغ 500GB',
+        technicianName: 'م. خالد عبد الرحمن',
+        cost: 0,
+        status: 'completed'
+      }
+    ]
   },
   {
     id: 'pc-004',
@@ -110,13 +182,32 @@ export const INITIAL_COMPUTERS: ComputerAsset[] = [
       {
         id: 'maint-102',
         assetId: 'pc-004',
-        date: '2025-03-05',
+        date: '2026-02-18',
+        issue: 'توقفت قارئة الباركود وطابعة الروشتات عن العمل',
+        actionTaken: 'إعادة التعريف وتغيير منفذ USB الرئيسي',
+        technicianName: 'م. طارق حسن',
+        cost: 100,
+        status: 'completed'
+      },
+      {
+        id: 'maint-104a',
+        assetId: 'pc-004',
+        date: '2026-05-22',
         issue: 'عطل بمزود الطاقة (Power Supply) وتوقف مفاجئ',
         actionTaken: 'جاري استبدال مزود الطاقة بآخر قدرة 500W',
         technicianName: 'م. طارق حسن',
         cost: 450,
-        status: 'in_progress',
-        notes: 'سيتم الانتهاء خلال اليوم'
+        status: 'completed'
+      },
+      {
+        id: 'maint-104b',
+        assetId: 'pc-004',
+        date: '2026-07-11',
+        issue: 'طلب فحص وتحديث برنامج الأدوية المركزية',
+        actionTaken: 'تحديث قاعدة بيانات الصيدلية والتأكد من الاتصال',
+        technicianName: 'م. أحمد عبد الفتاح',
+        cost: 0,
+        status: 'completed'
       }
     ]
   },
@@ -141,7 +232,29 @@ export const INITIAL_COMPUTERS: ComputerAsset[] = [
     vendorName: 'HP Inc',
     notes: 'مرتبط برابط متسلسل مع جهاز تحليل الدم الآلي LIS system',
     createdAt: '2023-02-18T08:00:00Z',
-    updatedAt: '2025-01-10T10:00:00Z'
+    updatedAt: '2025-01-10T10:00:00Z',
+    maintenanceHistory: [
+      {
+        id: 'maint-105a',
+        assetId: 'pc-005',
+        date: '2026-04-02',
+        issue: 'انقطاع الاتصال بين حاسوب المعمل وجهاز التحليل الآلي',
+        actionTaken: 'استبدال كابل RS232 الموصل وضبط الباود ريت',
+        technicianName: 'م. خالد عبد الرحمن',
+        cost: 150,
+        status: 'completed'
+      },
+      {
+        id: 'maint-105b',
+        assetId: 'pc-005',
+        date: '2026-06-08',
+        issue: 'حاجة لإعادة تثبيت تعريفات نظام أوبونتو للشبكة',
+        actionTaken: 'تحديث حزم النظام وتهيئة أذونات الاتصال',
+        technicianName: 'م. أحمد عبد الفتاح',
+        cost: 0,
+        status: 'completed'
+      }
+    ]
   },
   {
     id: 'pc-006',
@@ -164,7 +277,29 @@ export const INITIAL_COMPUTERS: ComputerAsset[] = [
     vendorName: 'Lenovo',
     notes: 'لتسجيل الكشف وتدوين تذاكر العلاج والوصفات الطبية',
     createdAt: '2022-04-12T08:00:00Z',
-    updatedAt: '2024-11-20T11:00:00Z'
+    updatedAt: '2024-11-20T11:00:00Z',
+    maintenanceHistory: [
+      {
+        id: 'maint-106a',
+        assetId: 'pc-006',
+        date: '2026-03-28',
+        issue: 'توقف طابعة العيادة الخارجية عن العمل',
+        actionTaken: 'تغيير كابل الداتا وإعادة تعريف الطابعة',
+        technicianName: 'م. طارق حسن',
+        cost: 50,
+        status: 'completed'
+      },
+      {
+        id: 'maint-106b',
+        assetId: 'pc-006',
+        date: '2026-07-02',
+        issue: 'فحص دوري واستبدال كابل الايثرنت للشبكة',
+        actionTaken: 'تركيب كابل RJ45 جديد واختبار سرعة الاتصال',
+        technicianName: 'م. خالد عبد الرحمن',
+        cost: 40,
+        status: 'completed'
+      }
+    ]
   },
   {
     id: 'pc-007',

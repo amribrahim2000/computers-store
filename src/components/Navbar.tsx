@@ -35,6 +35,7 @@ interface NavbarProps {
   onExportExcel: () => void;
   onDownloadTemplate: () => void;
   onResetData: () => void;
+  onSyncAllToMysql?: () => void;
   activeTab: 'all' | 'maintenance' | 'stats';
   setActiveTab: (tab: 'all' | 'maintenance' | 'stats') => void;
 }
@@ -53,6 +54,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onExportExcel,
   onDownloadTemplate,
   onResetData,
+  onSyncAllToMysql,
   activeTab,
   setActiveTab,
 }) => {
@@ -199,6 +201,18 @@ export const Navbar: React.FC<NavbarProps> = ({
               <Server className="w-4 h-4 text-indigo-600" />
               <span>حزمة PHP & MySQL</span>
             </button>
+
+            {/* مزامنة وحفظ البيانات الحالية مباشرة إلى MySQL */}
+            {onSyncAllToMysql && (
+              <button
+                onClick={onSyncAllToMysql}
+                className="flex items-center gap-1.5 px-3 py-2 bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs sm:text-sm rounded-xl transition active:scale-95 cursor-pointer shadow-2xs"
+                title="مزامنة كافة الأجهزة الحالية من الذاكرة المحلية مباشرة وحفظها في قاعدة بيانات MySQL"
+              >
+                <RefreshCw className="w-4 h-4 text-white" />
+                <span>مزامنة مع MySQL الآن</span>
+              </button>
+            )}
 
             {/* إضافة جهاز جديد */}
             <button

@@ -10,7 +10,9 @@ import {
   Table, 
   Layers, 
   Download,
-  Info
+  Info,
+  Database,
+  Server
 } from 'lucide-react';
 import { ComputerAsset, ExcelColumnMapping } from '../types';
 import { 
@@ -20,6 +22,7 @@ import {
   DEFAULT_COLUMN_MAPPING,
   downloadSampleExcelTemplate
 } from '../utils/excelUtils';
+import { getMysqlApiUrl, setMysqlApiUrl } from '../utils/apiSyncUtils';
 
 interface ExcelUploadModalProps {
   isOpen: boolean;
@@ -48,6 +51,10 @@ export const ExcelUploadModal: React.FC<ExcelUploadModalProps> = ({
   // النتيجة للذكاء البرمجي والمعاينة
   const [previewAssets, setPreviewAssets] = useState<ComputerAsset[]>([]);
   const [importMode, setImportMode] = useState<'append' | 'replace'>('append');
+
+  // حالة رابط MySQL API
+  const [apiUrl, setApiUrlState] = useState<string>(getMysqlApiUrl());
+  const [showApiConfig, setShowApiConfig] = useState(false);
 
   if (!isOpen) return null;
 
@@ -467,13 +474,58 @@ export const ExcelUploadModal: React.FC<ExcelUploadModalProps> = ({
           {step === 'preview' && (
             <div className="space-y-5">
               
-              <div className="flex items-center justify-between bg-emerald-50 p-4 rounded-xl border border-emerald-200">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between bg-emerald-50 p-4 rounded-xl border border-emerald-200 gap-3">
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
                   <span className="text-sm font-bold text-emerald-900">
                     تم تحليل الملف بنجاح وجاهز لاستيراد عدد ({previewAssets.length}) جهاز كمبيوتر!
                   </span>
                 </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-lg text-xs font-bold border border-emerald-300 flex items-center gap-1.5">
+                    <Database className="w-3.5 h-3.5" />
+                    <span>مزامنة تلقائية مع MySQL مفعّلة</span>
+                  </span>
+                </div>
+              </div>
+
+              {/* بطاقة الحفظ المباشر والتسجيل في MySQL */}
+              <div className="p-4 bg-blue-50/70 border border-blue-200 rounded-xl space-y-2 text-xs">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-blue-900 font-bold">
+                    <Database className="w-4 h-4 text-blue-700" />
+                    <span>تأكيد الحفظ المزدوج (الواجهة + قاعدة البيانات MySQL + سجل الأنشطة Audit Log)</span>
+                  </div>
+                  <button 
+                    type="button"
+                    onClick={() => setShowApiConfig(!showApiConfig)}
+                    className="text-blue-700 hover:underline text-[11px] font-bold cursor-pointer"
+                  >
+                    {showApiConfig ? 'إخفاء الإعدادات' : 'تعديل مسار MySQL API'}
+                  </button>
+                </div>
+                <p className="text-slate-600 leading-relaxed">
+                  عند ضغط "تأكيد واستيراد الأجهزة"، سيقوم النظام بحفظ الأجهزة في واجهة النظام المحلية، بالإضافة إلى إرسال دفعة البيانات مباشرة إلى جدول <code className="bg-blue-100 px-1 py-0.5 rounded font-mono text-blue-900">computers</code> وحفظ سجل التغيير في جدول <code className="bg-blue-100 px-1 py-0.5 rounded font-mono text-blue-900">audit_logs</code> بقاعدة بيانات MySQL!
+                </p>
+
+                {showApiConfig && (
+                  <div className="mt-3 p-3 bg-white border border-blue-200 rounded-lg space-y-2 animate-fadeIn">
+                    <label className="font-bold text-slate-800 text-[11px] block">مسار خادم MySQL API (api.php):</label>
+                    <div className="flex gap-2">
+                      <input 
+                        type="text"
+                        value={apiUrl}
+                        onChange={(e) => {
+                          setApiUrlState(e.target.value);
+                          setMysqlApiUrl(e.target.value);
+                        }}
+                        placeholder="/php_backend/api.php أو http://localhost/hospital_backend/api.php"
+                        className="flex-1 bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 font-mono text-xs text-slate-900 focus:outline-none focus:border-blue-600"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* وضع الاستيراد */}

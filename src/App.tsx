@@ -16,6 +16,14 @@ import { WarrantyNotificationsModal } from './components/WarrantyNotificationsMo
 import { ComputerAsset, MaintenanceRecord, HospitalDepartment, User, AuditLogEntry, AuditActionType } from './types';
 import { INITIAL_COMPUTERS, INITIAL_USERS, INITIAL_AUDIT_LOGS } from './data/initialData';
 import { exportAssetsToExcel, downloadSampleExcelTemplate } from './utils/excelUtils';
+import { 
+  syncBatchAssetsToMysql, 
+  sendAuditLogToMysql, 
+  syncSingleAssetToMysql,
+  batchSoftDeleteMysql,
+  batchRestoreMysql,
+  batchPermanentDeleteMysql 
+} from './utils/apiSyncUtils';
 import { CheckCircle2, AlertCircle, Info, Sparkles } from 'lucide-react';
 
 const STORAGE_KEY = 'hospital_computers_inventory_v1';
@@ -137,7 +145,7 @@ export default function App() {
     }, 4000);
   };
 
-  // دالة تسجيل العمليات في سجل Audit Log
+  // دالة تسجيل العمليات في سجل Audit Log والمزامنة مع MySQL
   const logAudit = (
     actionType: AuditActionType,
     details: string,
@@ -156,6 +164,9 @@ export default function App() {
       timestamp: new Date().toISOString()
     };
     setAuditLogs(prev => [newEntry, ...prev]);
+
+    // حفظ وإرسال السجل فوراً إلى قاعدة بيانات MySQL
+    sendAuditLogToMysql(newEntry).catch(err => console.warn('MySQL Log Sync:', err));
   };
 
   // تسجيل الدخول والخروج
@@ -198,15 +209,25 @@ export default function App() {
   };
 
   // استيراد الأجهزة من شيت إكسيل
-  const handleImportAssets = (newAssets: ComputerAsset[], replaceExisting: boolean) => {
+  const handleImportAssets = async (newAssets: ComputerAsset[], replaceExisting: boolean) => {
     if (replaceExisting) {
       setAssets(newAssets);
       logAudit('excel_import', `استبدال جميع أجهزة السجل واستيراد ${newAssets.length} جهاز كمبيوتر من شيت إكسيل`);
-      showToast(`تم استبدال القائمة بنجاح واستيراد ${newAssets.length} جهاز كمبيوتر من شيت الإكسيل!`);
+      showToast(`تم استبدال القائمة واستيراد ${newAssets.length} جهاز بنجاح!`);
     } else {
       setAssets(prev => [...newAssets, ...prev]);
       logAudit('excel_import', `دمج وإضافة ${newAssets.length} جهاز كمبيوتر جديد من شيت إكسيل`);
       showToast(`تم دمج وإضافة ${newAssets.length} جهاز كمبيوتر جديد من شيت الإكسيل!`);
+    }
+
+    // إرسال ومزامنة كافة الأجهزة المستوردة مباشرة إلى MySQL في قاعدة البيانات
+    const syncRes = await syncBatchAssetsToMysql(newAssets, replaceExisting, {
+      name: currentUser?.name || 'مستخدم IT',
+      role: currentUser?.role || 'admin'
+    });
+
+    if (syncRes.success) {
+      showToast(`✅ ${syncRes.message}`);
     }
   };
 
@@ -257,17 +278,129 @@ export default function App() {
     }
   };
 
-  // حذف جهاز
-  const handleDeleteAsset = (id: string) => {
-    const target = assets.find(a => a.id === id);
-    if (target) {
-      logAudit('delete_device', `حذف الجهاز (${target.assetTag} - ${target.name}) من النظام`, target.assetTag, target.name);
+  // مزامنة كافة البيانات المحلية فوراً مع MySQL
+  const handleSyncAllToMysql = async () => {
+    showToast('جاري مزامنة وحفظ كافة البيانات في قاعدة البيانات MySQL...');
+    const syncRes = await syncBatchAssetsToMysql(assets, false, {
+      name: currentUser?.name || 'مستخدم IT',
+      role: currentUser?.role || 'admin'
+    });
+
+    if (syncRes.success) {
+      logAudit('mysql_sync_all', `تمت مزامنة وحفظ عدد ${assets.length} جهاز كمبيوتر في قاعدة بيانات MySQL بنجاح`);
+      showToast(`✅ ${syncRes.message}`);
+    } else {
+      showToast(`⚠️ ${syncRes.message}`);
     }
-    setAssets(prev => prev.filter(a => a.id !== id));
-    showToast('تم حذف الجهاز من السجل بنجاح.');
+  };
+
+  // حذف جهاز فردي (Soft Delete نقل لسلة المهملات)
+  const handleDeleteAsset = async (id: string) => {
+    const target = assets.find(a => a.id === id);
+    if (!target) return;
+
+    const now = new Date().toISOString();
+    setAssets(prev => prev.map(a => a.id === id ? {
+      ...a,
+      isDeleted: true,
+      deletedAt: now,
+      deletedBy: currentUser?.name || 'مستخدم IT'
+    } : a));
+
+    logAudit('soft_delete_devices', `نقل الجهاز (${target.assetTag} - ${target.name}) إلى سلة المهملات (حذف مؤقت)`, target.assetTag, target.name);
+    showToast(`تم نقل الجهاز (${target.assetTag}) إلى سلة المهملات! يمكنك استعادته في أي وقت.`);
+
     if (selectedAsset?.id === id) {
       setSelectedAsset(null);
     }
+
+    // مزامنة الحذف المؤقت مع MySQL
+    batchSoftDeleteMysql([target.assetTag], {
+      name: currentUser?.name || 'مستخدم IT',
+      role: currentUser?.role || 'admin'
+    }).catch(err => console.warn('MySQL Soft Delete Error:', err));
+  };
+
+  // حذف مجمع لمجموعة أجهزة (Batch Soft Delete)
+  const handleBatchSoftDeleteAssets = async (ids: string[]) => {
+    if (ids.length === 0) return;
+
+    const targetTags: string[] = [];
+    const now = new Date().toISOString();
+
+    setAssets(prev => prev.map(a => {
+      if (ids.includes(a.id)) {
+        targetTags.push(a.assetTag);
+        return {
+          ...a,
+          isDeleted: true,
+          deletedAt: now,
+          deletedBy: currentUser?.name || 'مستخدم IT'
+        };
+      }
+      return a;
+    }));
+
+    logAudit('soft_delete_devices', `حذف مؤقت مجمع ونقل عدد ${ids.length} جهاز إلى سلة المهملات`);
+    showToast(`تم نقل ${ids.length} جهاز بنجاح إلى سلة المهملات!`);
+
+    // مزامنة مع MySQL
+    batchSoftDeleteMysql(targetTags, {
+      name: currentUser?.name || 'مستخدم IT',
+      role: currentUser?.role || 'admin'
+    }).catch(err => console.warn('MySQL Batch Soft Delete Error:', err));
+  };
+
+  // استعادة مجمعة للأجهزة من سلة المهملات (Batch Restore)
+  const handleBatchRestoreAssets = async (ids: string[]) => {
+    if (ids.length === 0) return;
+
+    const targetTags: string[] = [];
+
+    setAssets(prev => prev.map(a => {
+      if (ids.includes(a.id)) {
+        targetTags.push(a.assetTag);
+        return {
+          ...a,
+          isDeleted: false,
+          deletedAt: undefined,
+          deletedBy: undefined
+        };
+      }
+      return a;
+    }));
+
+    logAudit('restore_devices', `استعادة مجمعة لعدد ${ids.length} جهاز من سلة المهملات إلى السجل النشط`);
+    showToast(`تمت استعادة ${ids.length} جهاز بنجاح لقائمة الأجهزة النشطة!`);
+
+    // مزامنة الاستعادة مع MySQL
+    batchRestoreMysql(targetTags, {
+      name: currentUser?.name || 'مستخدم IT',
+      role: currentUser?.role || 'admin'
+    }).catch(err => console.warn('MySQL Batch Restore Error:', err));
+  };
+
+  // حذف نهائي مجمع من سلة المهملات (Batch Permanent Delete)
+  const handleBatchPermanentDeleteAssets = async (ids: string[]) => {
+    if (ids.length === 0) return;
+
+    const targetTags: string[] = [];
+    setAssets(prev => prev.filter(a => {
+      if (ids.includes(a.id)) {
+        targetTags.push(a.assetTag);
+        return false;
+      }
+      return true;
+    }));
+
+    logAudit('permanent_delete_devices', `الحذف النهائي لعدد ${ids.length} جهاز من سلة المهملات بشكل كامل`);
+    showToast(`تم الحذف النهائي لعدد ${ids.length} جهاز بشكل كامل من النظام!`);
+
+    // مزامنة الحذف النهائي مع MySQL
+    batchPermanentDeleteMysql(targetTags, {
+      name: currentUser?.name || 'مستخدم IT',
+      role: currentUser?.role || 'admin'
+    }).catch(err => console.warn('MySQL Batch Permanent Delete Error:', err));
   };
 
   // تسجيل تذكرة صيانة
@@ -377,6 +510,7 @@ export default function App() {
         onExportExcel={handleExport}
         onDownloadTemplate={downloadSampleExcelTemplate}
         onResetData={handleResetData}
+        onSyncAllToMysql={handleSyncAllToMysql}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
       />
@@ -448,6 +582,9 @@ export default function App() {
                 setSinglePrintAsset(asset);
                 setIsPrintModalOpen(true);
               }}
+              onBatchDeleteAssets={handleBatchSoftDeleteAssets}
+              onBatchRestoreAssets={handleBatchRestoreAssets}
+              onBatchPermanentDeleteAssets={handleBatchPermanentDeleteAssets}
             />
           </div>
         )}
@@ -471,6 +608,9 @@ export default function App() {
                 setSinglePrintAsset(asset);
                 setIsPrintModalOpen(true);
               }}
+              onBatchDeleteAssets={handleBatchSoftDeleteAssets}
+              onBatchRestoreAssets={handleBatchRestoreAssets}
+              onBatchPermanentDeleteAssets={handleBatchPermanentDeleteAssets}
             />
           </div>
         )}

@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { ComputerAsset, HospitalDepartment } from '../types';
 import { getWarrantyNotifications } from '../utils/warrantyUtils';
+import { DepartmentMaintenanceTrendChart } from './DepartmentMaintenanceTrendChart';
 
 interface StatsDashboardProps {
   assets: ComputerAsset[];
@@ -233,6 +234,12 @@ export const StatsDashboard: React.FC<StatsDashboardProps> = ({
         </div>
 
       </div>
+
+      {/* لوحة الرسم البياني المخصص لوتيرة الأعطال لكل قسم على مدار الـ 6 أشهر الماضية Recharts */}
+      <DepartmentMaintenanceTrendChart 
+        assets={assets} 
+        onFilterDepartment={onFilterDepartment} 
+      />
 
       {/* قسم التنبيهات ونظام متابعة انتهاء ضمان الأجهزة */}
       <div className="bg-gradient-to-r from-amber-500/10 via-amber-50/60 to-orange-50 border border-amber-200/80 rounded-2xl p-5 shadow-xs">
